@@ -1,39 +1,30 @@
-#include <Gdip_All>
+
+Persistent
+
+#include <log>
 #include <Direct2D>
-#Include *i <wincapture\wincapture>
-g := DirectGUI()
-pTextFormat := g.pdwrite.CreateTextFormat('Microsoft YaHei UI', 0, 400, 0, 5, 37.5, 'en-us')
-pTextFormat.SetTextAlignment(2)
-pTextFormat.SetParagraphAlignment(2)
-pBrush := g.render.CreateSolidColorBrush(D2D1_COLOR_F(rgb2float('FF0000')))
+#include <Gdip_All>
+#include <ctypes>
+#include <wincapture>
+Gdip_Startup()
+dx := wincapture.DXGI()
 
-if IsSet(wincapture) {
-	dx := wincapture.DXGI(), ccc := dx.captureAndSave()
-	props := D2D1_BITMAP_PROPERTIES([D2D1_PIXEL_FORMAT(87, 1), 144, 144])
-	img := g.render.CreateBitmap(size := D2D1_SIZE_U([ccc.width, ccc.height]),
-		ccc.ptr, ccc.pitch, props)
-}
+d2ui := DirectGUI('+AlwaysOnTop -DPIScale -Caption -Border +LastFound ToolWindow -Resize -HScroll +E0x08000000 -SysMenu','gui')
+;load pic
+ccc := BitmapBuffer.loadPicture(A_ScriptDir '\background.png')
+props := D2D1_BITMAP_PROPERTIES([D2D1_PIXEL_FORMAT([87, 1]), 96, 96])
+img := d2ui.render.CreateBitmap(size := D2D1_SIZE_U([ccc.width, ccc.height]),
+	ccc.ptr, ccc.pitch, props)
 
-g.Show()
-t := A_TickCount
-r := 10, b := 10
-loop n := 400 {
-	g.render.BeginDraw()
-	g.render.Clear()
-	s := 'Hello World using DirectWrite      `n测试'
-	if IsSet(img)
-		g.render.DrawBitmap(img)
-	g.render.DrawRectangle(D2D1_RECT_F([5, 5, r += 5, b += 5]), pBrush, 5, 0)
-	g.render.DrawText(s, pTextFormat, D2D1_RECT_F([0, 0, 450, 300]), pBrush)
-	; t := g.pdwrite.CreateTextLayout(s, pTextFormat, 500, 500), g.render.DrawTextLayout(direct2d_struct('D2D1_POINT_2F'), t, pBrush)
-	g.render.EndDraw()
-	g.update(0, 0, A_ScreenWidth, A_ScreenHeight)
-}
-MsgBox (1000 * n / (A_TickCount - t)) 'fps'
-F9:: Reload
-F10:: ExitApp
+d2ui.show()
+d2ui.render.BeginDraw()
+d2ui.render.Clear()
+d2ui.render.DrawBitmap(img)
+d2ui.render.EndDraw()
+d2ui.show()
 
-; x '00FF00'
+
+;local func and class
 rgb2float(x)
 {
     x := Integer('0x' x)
@@ -43,7 +34,16 @@ rgb2float(x)
     color := [r, g, b, 1]
     return color
 }
-
+rgba2float(x)
+{
+    x := Integer('0x' x)
+    g := ((x & 0x00ff0000) >> 8) / 255
+    r := ((x & 0xff000000) >> 16) / 255
+    b := ((x & 0xff00)) / 255
+    a := ((x & 0xff)) / 255
+    color := [r, g, b, a]
+    return color
+}
 class DirectGUI extends Gui {
 	pd2d1 := ID2D1Factory(), pdwrite := IDWriteFactory()
 	/** @type {ID2D1DCRenderTarget} */

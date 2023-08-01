@@ -1,21 +1,46 @@
 #include <Direct2D>
 #include <Gdip_All>
 #include <ctypes>
-;Gdip_Startup()
+#include <wincapture>
+Gdip_Startup()
+dx := wincapture.DXGI()
 
 d2ui := DirectGUI('+AlwaysOnTop -DPIScale -Caption -Border +LastFound ToolWindow -Resize -HScroll +E0x08000000 -SysMenu','gui')
-d2ui.show()
-d2ui.render.BeginDraw()
-d2ui.render.Clear()
 
-p_brush := d2ui.render.CreateSolidColorBrush(D2D1_COLOR_F(rgb2float('FF0000')))
-p_brush1 := d2ui.render.CreateSolidColorBrush(D2D1_COLOR_F(rgba2float('00FF00CC')))
-d2ui.render.FillEllipse(D2D1_ELLIPSE([D2D1_POINT_2F([100, 100]), 100, 50]), p_brush)
-d2ui.render.FillRoundedRectangle(D2D1_ROUNDED_RECT([D2D1_RECT_F([100, 600, 400, 800]), 10, 10]) ,p_brush1)
+SetTimer(draw_circle, 200)
 
-d2ui.render.EndDraw()
-d2ui.show()
 
+draw_circle()
+{
+
+    d2ui.show()
+    d2ui.render.BeginDraw()
+	d2ui.render.Clear()
+
+    ;solid brush
+    v := Format("{:X}", Random(0, 0xffffffff))
+    p_brush := d2ui.render.CreateSolidColorBrush(D2D1_COLOR_F(rgba2float(v)))
+    d2ui.render.FillEllipse(D2D1_ELLIPSE([D2D1_POINT_2F([100, 100]), 100, 50]), p_brush)
+
+    D2D1_GRADIENT_STOPS := ctypes.array('D2D1_GRADIENT_STOP', 2)
+    stops := D2D1_GRADIENT_STOPS()
+    stops[0] := D2D1_GRADIENT_STOP([0, D2D1_COLOR_F(rgba2float(v))])
+    stops[1] := D2D1_GRADIENT_STOP([1, D2D1_COLOR_F(rgba2float(v))])
+
+    stop_collection := d2ui.render.CreateGradientStopCollection(stops, 2, 0, 0)
+
+    ;linear gradient brush
+    linear_gradient_brush_propertyies := D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES([D2D1_POINT_2F([300, 50]), D2D1_POINT_2F([400, 150])])
+    p_linear_brush := d2ui.render.CreateLinearGradientBrush(linear_gradient_brush_propertyies, 0, stop_collection)
+
+    d2ui.render.FillEllipse(D2D1_ELLIPSE([D2D1_POINT_2F([500, 500]), 100, 50]), p_linear_brush)
+
+    d2ui.render.EndDraw()
+    d2ui.show()
+}
+
+
+;local func and class
 rgb2float(x)
 {
     x := Integer('0x' x)

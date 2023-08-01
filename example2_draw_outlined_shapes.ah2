@@ -10,11 +10,14 @@ d2ui.render.Clear()
 
 p_brush := d2ui.render.CreateSolidColorBrush(D2D1_COLOR_F(rgb2float('FF0000')))
 p_brush1 := d2ui.render.CreateSolidColorBrush(D2D1_COLOR_F(rgba2float('00FF00CC')))
-d2ui.render.FillEllipse(D2D1_ELLIPSE([D2D1_POINT_2F([100, 100]), 100, 50]), p_brush)
-d2ui.render.FillRoundedRectangle(D2D1_ROUNDED_RECT([D2D1_RECT_F([100, 600, 400, 800]), 10, 10]) ,p_brush1)
+
+d2ui.render.DrawEllipse(D2D1_ELLIPSE([D2D1_POINT_2F([400, 100]), 200, 100]), p_brush, 3, 0)
+d2ui.render.DrawRectangle(D2D1_RECT_F([200, 200, 400, 400]), p_brush1, 3, 0)
 
 d2ui.render.EndDraw()
 d2ui.show()
+
+
 
 rgb2float(x)
 {
