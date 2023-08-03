@@ -12,7 +12,7 @@ dx := wincapture.DXGI()
 d2ui := DirectGUI('+AlwaysOnTop -DPIScale -Caption -Border +LastFound ToolWindow -Resize -HScroll +E0x08000000 -SysMenu','gui')
 ;load pic
 ccc := BitmapBuffer.loadPicture(A_ScriptDir '\background.png')
-props := D2D1_BITMAP_PROPERTIES([D2D1_PIXEL_FORMAT([87, 1]), 96, 96])
+props := D2D1_BITMAP_PROPERTIES([D2D1_PIXEL_FORMAT([87, 1]), 96 * 1, 96 * 1])
 img := d2ui.render.CreateBitmap(size := D2D1_SIZE_U([ccc.width, ccc.height]),
 	ccc.ptr, ccc.pitch, props)
 

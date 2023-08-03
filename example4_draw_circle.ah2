@@ -19,22 +19,52 @@ draw_circle()
 
     ;solid brush
     v := Format("{:X}", Random(0, 0xffffffff))
-    p_brush := d2ui.render.CreateSolidColorBrush(D2D1_COLOR_F(rgba2float(v)))
+    v1 := Format("{:X}", 0xff0000ff)
+    p_brush := d2ui.render.CreateSolidColorBrush(D2D1_COLOR_F(rgba2float('0000ffcc')))
     d2ui.render.FillEllipse(D2D1_ELLIPSE([D2D1_POINT_2F([100, 100]), 100, 50]), p_brush)
 
     D2D1_GRADIENT_STOPS := ctypes.array('D2D1_GRADIENT_STOP', 2)
     stops := D2D1_GRADIENT_STOPS()
-    stops[0] := D2D1_GRADIENT_STOP([0, D2D1_COLOR_F(rgba2float(v))])
-    stops[1] := D2D1_GRADIENT_STOP([1, D2D1_COLOR_F(rgba2float(v))])
+    stops[0] := D2D1_GRADIENT_STOP([0, D2D1_COLOR_F(rgba2float('ff0000ff'))])
+    stops[1] := D2D1_GRADIENT_STOP([1, D2D1_COLOR_F(rgba2float('0000ffff'))])
 
     stop_collection := d2ui.render.CreateGradientStopCollection(stops, 2, 0, 0)
 
     ;linear gradient brush
-    linear_gradient_brush_propertyies := D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES([D2D1_POINT_2F([300, 50]), D2D1_POINT_2F([400, 150])])
+	;线性渐变画刷
+    linear_gradient_brush_propertyies := D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES([D2D1_POINT_2F([500, 500]), D2D1_POINT_2F([600, 550])])
     p_linear_brush := d2ui.render.CreateLinearGradientBrush(linear_gradient_brush_propertyies, 0, stop_collection)
+	;p_linear_brush.SetStartPoint(D2D1_POINT_2F([0, 0]))
+	;p_linear_brush.SetEndPoint(D2D1_POINT_2F([500, 500]))
 
     d2ui.render.FillEllipse(D2D1_ELLIPSE([D2D1_POINT_2F([500, 500]), 100, 50]), p_linear_brush)
 
+	;径向渐变
+	radialGradientBrushProperties := D2D1_RADIAL_GRADIENT_BRUSH_PROPERTIES([D2D1_POINT_2F([800, 800]), D2D1_POINT_2F([0, 0]), 75, 50])
+	p_radia_gradient_brush := d2ui.render.CreateRadialGradientBrush(radialGradientBrushProperties, 0, stop_collection)
+	d2ui.render.FillEllipse(D2D1_ELLIPSE([D2D1_POINT_2F([600, 600]), 100, 50]), p_radia_gradient_brush)
+
+	;位图画刷
+	;大小不清楚规则
+	;ccc := BitmapBuffer.loadPicture(A_ScriptDir '\MJ.jpg') ;好像不支持jpg
+	pbitmp := Gdip_CreateBitmapFromFile(A_ScriptDir '\MJ.jpg')
+	ccc := BitmapBuffer.loadGpBitmap(pbitmp)
+	props := D2D1_BITMAP_PROPERTIES([D2D1_PIXEL_FORMAT([87, 1]), 96 * 2, 96 * 2])
+	img := d2ui.render.CreateBitmap(size := D2D1_SIZE_U([ccc.width, ccc.height]),
+		ccc.ptr, ccc.pitch, props)
+	p_bitmap_brush := d2ui.render.CreateBitmapBrush(img)
+	p_bitmap_brush.SetExtendModeX(D2D1_EXTEND_MODE_MIRROR := 2)
+	p_bitmap_brush.SetExtendModeY(D2D1_EXTEND_MODE_MIRROR := 2)
+	;d2ui.render.FillEllipse(D2D1_ELLIPSE([D2D1_POINT_2F([900, 800]), 500, 200]), p_bitmap_brush)
+	d2ui.render.FillRoundedRectangle(D2D1_ROUNDED_RECT([D2D1_RECT_F([700, 600, 900, 800]), 10, 10]) ,p_bitmap_brush)
+
+	;变形画刷
+	;平移矩阵
+	;| 1   0 |
+	;| 0   1 |
+	;| dx  dy|
+	p_bitmap_brush.SetTransform(D2D1_MATRIX_3X2_F([1, 0, 0, 1, 300, 300]))
+	d2ui.render.FillRoundedRectangle(D2D1_ROUNDED_RECT([D2D1_RECT_F([1000, 800, 1200, 1000]), 10, 10]) ,p_bitmap_brush)
     d2ui.render.EndDraw()
     d2ui.show()
 }

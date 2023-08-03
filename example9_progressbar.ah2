@@ -10,6 +10,13 @@ PictureObj := Gui1.Add("Picture", "x10 y+30 w500 h100 0xE vProgressBar")
 Gdip_SetProgress(PictureObj, 50, 0xff0993ea, 0xffbde5ff, "50`%")
 Gui1.Title := "Example 9 - d2d progress bar"
 Gui1.Show("AutoSize")
+loop(100)
+{
+	Sleep(300)
+	Gdip_SetProgress(PictureObj, A_Index, 0xff0993ea, 0xffbde5ff, A_Index "`%")
+}
+
+
 Slider_Change(GuiCtrlObj, Info)
 {
 	Gdip_SetProgress(GuiCtrlObj.Gui["ProgressBar"], GuiCtrlObj.Value, 0xff0993ea, 0xffbde5ff, GuiCtrlObj.Value "`%")
