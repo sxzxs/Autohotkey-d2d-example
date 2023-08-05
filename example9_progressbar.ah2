@@ -34,7 +34,7 @@ Gdip_SetProgress(GuiCtrl, Percentage, Foreground, Background:=0x00000000, Text:=
 	pTextFormat.SetTextAlignment(2)
 	pTextFormat.SetParagraphAlignment(2)
 
-	d2ui.show()
+	d2ui.show(0, 0, 500, 100)
 	d2ui.render.BeginDraw()
 	d2ui.render.Clear()
 
@@ -68,9 +68,9 @@ rgb2float(x)
 rgba2float(x)
 {
     x := Integer('0x' x)
-    g := ((x & 0x00ff0000) >> 8) / 255
-    r := ((x & 0xff000000) >> 16) / 255
-    b := ((x & 0xff00)) / 255
+    g := ((x & 0x00ff0000) >> 16) / 255
+    r := ((x & 0xff000000) >> 24) / 255
+    b := ((x & 0xff00) >> 8) / 255
     a := ((x & 0xff)) / 255
     color := [r, g, b, a]
     return color
