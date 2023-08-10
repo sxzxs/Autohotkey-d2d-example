@@ -1,98 +1,38 @@
-#include <Gdip_All>
-#include <wincapture>
-#Include <Advapi32>
 #include <log>
+TextBackgroundColor := 0xFFBBBB  ; BGR 格式的自定义颜色.
+TextBackgroundBrush := DllCall("CreateSolidBrush", "UInt", TextBackgroundColor)
 
-dx := wincapture.DXGI()
-Gdip_Startup()
-pbitmp := Gdip_BitmapFromScreen()
-bb := BitmapBuffer.loadGpBitmap(pbitmp)
-Gdip_DisposeImage(pbitmp)
-bb := bb.threshold()
-;bb := bb.range(689, 382, 689 + 22, 382 + 159, true)
-logger.info(bb[0, 0])
-;ExitApp
+MyGui := Gui('+Resize ')
+Text := MyGui.Add("Text",, "Here is some text that is given`na custom background color.")
 
-if(my_select_region(&x, &y, &w, &h))
+; 64 位脚本必须调用 SetWindowLongPtr 代替 SetWindowLong:
+SetWindowLong := A_PtrSize=8 ? "SetWindowLongPtr" : "SetWindowLong"
+
+WindowProcNew := CallbackCreate(WindowProc)  ; 避免子类化中使用快速模式.
+WindowProcOld := DllCall(SetWindowLong, "Ptr", MyGui.Hwnd, "Int", -4  ; -4 为 GWL_WNDPROC
+    , "Ptr", WindowProcNew, "Ptr") ; 返回值必须设置为 "Ptr" 或 "UPtr" 而不是 "Int".
+
+MyGui.Show
+
+WindowProc(hwnd, uMsg, wParam, lParam)
 {
-    bb := bb.range(x, y, x + w, y + h, true)
-    logger.info(x, y, bb.height, bb.width)
-    loop h
+    Critical
+    logger.info(hwnd, uMsg, wParam, lParam)
+    ; 否则(因为上面没有返回), 将所有的未处理事件传递给原来的 WindowProc.
+    switch uMsg
     {
-        y1 := A_Index - 1
-        loop w
+        case 0x0005:
         {
-            x1 := A_Index - 1
-            logger.info(x1, y1)
-            logger.info(bb[x1, y1])
+            width := lParam & 0xffff
+            height := (lParam >> 16) & 0xffff
+            logger.info('w ' width ' h ' height)
         }
-    }
-}
-logger.info('over')
-
-my_select_region(&x, &y, &w, &h)
-{
-    rtn := ReadProcessStdOut(A_ScriptDir '\get_region.exe')
-    if(rtn != 'error')
-    {
-        word_array := StrSplit(rtn, A_Space, ".")  ; 忽略句点.
-        x := word_array[1], y := word_array[2]
-        w := word_array[3], h := word_array[4]
-    }
-    else
-    {
-        return false
-    }
-    return true
-}
-ReadProcessStdOut(cmd, stdin := "", encoding := "cp0", is_wait := true) 
-{
-    sa := Buffer(24)
-    NumPut("uint", sa.Size, sa)
-    NumPut("ptr", 0, "uint", 1, sa, 8)
-
-    if !DllCall("CreatePipe", "ptr*", &hReadPipeOut := 0, "ptr*", &hWritePipeOut := 0, "ptr", sa, "uint", 0)
-        throw OSError()
-    DllCall("SetHandleInformation", "ptr", hReadPipeOut, "uint", 1, "uint", 0)
-
-    si := Buffer(104, 0)
-    NumPut("uint", si.Size, si)
-    NumPut("uint", 0x101, si, 60)
-    NumPut("ptr", hWritePipeOut, si, 88)
-
-    if stdin !== "" {
-        if !DllCall("CreatePipe", "ptr*", &hReadPipeIn := 0, "ptr*", &hWritePipeIn := 0, "ptr", sa, "uint", 0)
-            throw OSError()
-        DllCall("SetHandleInformation", "ptr", hWritePipeIn, "uint", 1, "uint", 0)
-        NumPut("ptr", hReadPipeIn, si, 80)
-    }
-
-    if !DllCall("CreateProcessW", "ptr", 0, "str", cmd, "ptr", 0, "ptr", 0, "int", true, "uint", 0, "ptr", 0, "ptr", 0, "ptr", si, "ptr", pi := Buffer(24)) {
-        DllCall("CloseHandle", "ptr", hWritePipeOut)
-        DllCall("CloseHandle", "ptr", hReadPipeOut)
-        throw OSError()
-    }
-    DllCall("CloseHandle", "ptr", NumGet(pi, "ptr"))
-    DllCall("CloseHandle", "ptr", NumGet(pi, 8, "ptr"))
-    DllCall("CloseHandle", "ptr", hWritePipeOut)
-
-
-    if stdin !== "" {
-        DllCall("CloseHandle", "ptr", hReadPipeIn)
-        if !DllCall("WriteFile", "ptr", hWritePipeIn, "astr", stdin, "uint", StrPut(stdin, encoding) - 1, "uint*", &lpNumberOfBytesWritten := 0, "ptr", 0){
-            DllCall("CloseHandle", "ptr", hWritePipeIn)
-            throw OSError()
+        case 0x0100:
+        {
+            logger.info(wParam)
         }
-        DllCall("CloseHandle", "ptr", hWritePipeIn)
+        default:
     }
-
-	if(!is_wait)
-		return
-
-    stdout := ""
-    while DllCall("ReadFile", "ptr", hReadPipeOut, "ptr", buf := Buffer(4096), "uint", buf.Size, "uint*", &lpNumberOfBytesRead := 0, "ptr", 0) && lpNumberOfBytesRead
-        stdout .= StrGet(buf, lpNumberOfBytesRead, encoding)
-    DllCall("CloseHandle", "ptr", hReadPipeOut)
-
-    return stdout
+	;pView.Resize(width, height)
+    return DllCall("CallWindowProc", "Ptr", WindowProcOld, "Ptr", hwnd, "UInt", uMsg, "Ptr", wParam, "Ptr", lParam)
 }

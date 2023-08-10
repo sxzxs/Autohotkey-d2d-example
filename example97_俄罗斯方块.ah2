@@ -11,6 +11,12 @@
 #include <Gdip_All>
 #include <ctypes>
 #include <wincapture>
+
+KEY_LEFT := GetKeyVK('h')
+KEY_DOWN := GetKeyVK('j')
+KEY_RIGHT := GetKeyVK('l')
+KEY_UP := GetKeyVK('k')
+
 ROW_NUM := 20
 COL_NUM := 10
 ROW_NUM_FIGURE := 2
@@ -34,31 +40,30 @@ main()
 {
     Gdip_Startup()
     dx := wincapture.DXGI()
-    global ui := Gui('+AlwaysOnTop -DPIScale +Caption  +Border +LastFound -ToolWindow +Resize -HScroll +E0x08000000 +SysMenu','AHK俄罗斯方块')
-    ui.show('x0 y0 w400 h380')
+    global ui := Gui('+AlwaysOnTop -DPIScale +Caption  +Border +LastFound -ToolWindow +Resize -HScroll  +SysMenu','上k下j左h右l')
+    ui.show('x0 y0 w500 h700')
 	global pView := View()
     pView.Initial(ui)
     pView.InitialRectLCD()
 	global pGame := Game(pView)
     pGame.UpdateView()
 
-    ;定时器
-    SetTimer(timer_handle.bind(pGame), 1000)
-    ;注册消息
-    OnMessage 0x000F, WM_PAINT ;resize
-    OnMessage(0x0005, WM_SIZE) ;resize
-    OnMessage(0x0100, WM_KEYDOWN)
+    SubclassControl(ui.Hwnd, win_process)
+    SetTimer(timer_handle.bind(ui), 1000 - pGame.GetLevel() * 10)
 }
 
-timer_handle(pGame)
+timer_handle(ui)
 {
-    if (!pGame.GameOver())
+    PostMessage(WM_TIMER := 0x113, ,,, ui.Hwnd)
+    ;更新定时器时间
+    SetTimer , 1000 
+    if(pGame.GameOver())
     {
-        if (pGame.CanMoveDown())
-            pGame.Timer()
+        rtn := MsgBox('GAME over! restart?',,'YesNo')
+        if(rtn = "Yes")
+            Reload
         else
-            pGame.MergeFigureToGrid()
-        pGame.UpdateView()
+            ExitApp
     }
 }
 
@@ -87,12 +92,12 @@ class Game
         this.m_iFigure_i := 0
         this.m_iFigure_j := 0
 
-	    this.m_currFigureInfo := create_figure(Random(1, 7))
+	    this.m_currFigureInfo := create_figure(Random(1, FIGURE_INFO_NUM))
 	    this.m_currFigureInfo.SetIndex(Random(1, 4))
 	    y := this.m_currFigureInfo.GetFigure().GetBottomY()
 	    this.m_currFigureInfo.GetFigure().Move((COL_NUM - 1) / 2, 0 - y)
 
-        this.m_nextFigureInfo := create_figure(Random(1, 7))
+        this.m_nextFigureInfo := create_figure(Random(1, FIGURE_INFO_NUM))
     }
     __Delete() 
     {
@@ -128,6 +133,10 @@ class Game
         figure := this.m_currFigureInfo.GetNextFigure()
         figure.Move(x, y)
         if (figure.GetLeftX() < 0 || figure.GetRightX() > COL_NUM - 1)
+        {
+            this.m_currFigureInfo.GetPrevFigure()
+        }
+        if(figure.GetBottomY() > ROW_NUM - 1)
         {
             this.m_currFigureInfo.GetPrevFigure()
         }
@@ -253,7 +262,7 @@ class Game
         y := this.m_currFigureInfo.GetFigure().GetBottomY()
 
         this.m_currFigureInfo.GetFigure().Move((COL_NUM - 1) / 2, 0 - y)
-        this.m_nextFigureInfo := create_figure(Random(1, FIGURE_NUM))
+        this.m_nextFigureInfo := create_figure(Random(1, FIGURE_INFO_NUM))
     }
 	RemoveGridLine()
     {
@@ -918,66 +927,77 @@ GetRectWidth(rect)
 	return rect.right-rect.left
 }
 
-WM_PAINT(wParam, lParam, msg, hwnd)
+
+win_process(HWND, Msg, wParam, lParam, SubclassID, RefData)
 {
     Critical
-    PaintStruct := Buffer(A_PtrSize + 60, 0)
-    hdc := DllCall('User32\BeginPaint', 'ptr', hwnd, 'ptr', PaintStruct, 'ptr')
-    DllCall('User32\EndPaint', 'ptr', hWnd, 'ptr', PaintStruct, 'int')
-    pGame.UpdateView()
-}
-
-WM_LBUTTONDOWN(wParam, lParam, msg, hwnd)
-{
-	PostMessage 0xA1, 2
-}
-
-WM_KEYDOWN(wParam, lParam, msg, hwnd)
-{
-    if (!pGame.GameOver())
+    switch Msg 
     {
-		switch(wParam)
+        case WM_SIZE := 0x0005:
         {
-            case VK_UP := 0x26: 
+            width := lParam & 0xffff
+            height := (lParam >> 16) & 0xffff
+            pView.Resize(width, height)
+        }
+        case WM_PAINT := 0x000F:
+        {
+            PaintStruct := Buffer(A_PtrSize + 60, 0)
+            hdc := DllCall('User32\BeginPaint', 'ptr', hwnd, 'ptr', PaintStruct, 'ptr')
+            DllCall('User32\EndPaint', 'ptr', hWnd, 'ptr', PaintStruct, 'int')
+            pGame.UpdateView()
+        }
+        case WM_KEYDOWN := 0x0100:
+        {
+            if (!pGame.GameOver())
             {
-				pGame.UpArrowKey()
-            }
-            case VK_DOWN := 0x28:
-            {
-				if (pGame.CanMoveDown())
-					pGame.DownArrowKey()
-				else
-					pGame.MergeFigureToGrid()
-            }
-            case VK_LEFT := 0x25:
-            {
-				pGame.LeftArrowKey()
-            }
-            case VK_RIGHT := 0x27:
-            {
-				pGame.RightArrowKey()
-            }
-            case VK_SPACE := 0x20:
-            {
-				while (pGame.CanMoveDown())
-				{
-					pGame.DownArrowKey()
-					pGame.UpdateView()
-				}
-				pGame.MergeFigureToGrid()
+                switch(wParam)
+                {
+                    case KEY_UP: 
+                    {
+                        pGame.UpArrowKey()
+                    }
+                    case KEY_DOWN:
+                    {
+                        if (pGame.CanMoveDown())
+                            pGame.DownArrowKey()
+                        else
+                            pGame.MergeFigureToGrid()
+                    }
+                    case KEY_LEFT:
+                    {
+                        pGame.LeftArrowKey()
+                    }
+                    case KEY_RIGHT:
+                    {
+                        pGame.RightArrowKey()
+                    }
+                    case VK_SPACE := 0x20:
+                    {
+                        while (pGame.CanMoveDown())
+                        {
+                            pGame.DownArrowKey()
+                            pGame.UpdateView()
+                        }
+                        pGame.MergeFigureToGrid()
+                    }
+                }
+                pGame.UpdateView()
             }
         }
-		pGame.UpdateView()
+        case WM_TIMER := 0x113:
+        {
+            if (!pGame.GameOver())
+            {
+                if (pGame.CanMoveDown())
+                    pGame.Timer()
+                else
+                    pGame.MergeFigureToGrid()
+            }
+            pGame.UpdateView()
+        }
+        default:
     }
-}
-
-WM_SIZE(wParam, lParam, msg, hwnd)
-{
-    Critical
-    width := lParam & 0xffff
-    height := (lParam >> 16) & 0xffff
-	pView.Resize(width, height)
-
+    Return DllCall("Comctl32.dll\DefSubclassProc", "Ptr", HWND, "UInt", Msg, "Ptr", wParam, "Ptr", lParam)
 }
 
 class DirectGui2Hwnd extends Gui
@@ -1096,4 +1116,42 @@ create_figure(n)
         default:
             MsgBox('Figure number error!')
     }
+}
+
+; ======================================================================================================================
+; SubclassControl    Installs, updates, or removes the subclass callback for the specified control.
+; Author:            just me (www.ahkscript.org) v1; => v2 by sxz
+; Tested with:       AHK 1.1.15.00 U64
+; Tested on:         Win 8.1 x64
+; Parameters:        HCTRL    -  Handle to the control.
+;                    func_object - If you pass an empty string (""), the subclass callback will be removed.
+;                    RefData  -  Optional integer value passed to the callback function.
+; Return value:      Non-zero if the subclass callback was successfully installed, updated, or removed;
+;                    otherwise, False.
+; Remarks:           The callback function must have exactly six parameters, see
+;                    SUBCLASSPROC -> msdn.microsoft.com/en-us/library/bb776774(v=vs.85).aspx
+; ======================================================================================================================
+SubclassControl(HCTRL, func_object, RefData := 0)
+{
+    Static ControlCB := Map()
+    If ControlCB.Has(HCTRL) 
+    {
+        DllCall("Comctl32.dll\RemoveWindowSubclass", "Ptr", HCTRL, "Ptr", ControlCB[HCTRL], "Ptr", HCTRL)
+        DllCall("Kernel32.dll\GlobalFree", "Ptr", ControlCB[HCTRL], "Ptr")
+        ControlCB.Delete(HCTRL)
+        If (func_object = '')
+            Return True
+    }
+    a := DllCall("User32.dll\IsWindow", "Ptr", HCTRL, "UInt")
+    b := HasMethod(func_object)
+    c := CallbackCreate(func_object)
+    if(!DllCall("User32.dll\IsWindow", "Ptr", HCTRL, "UInt") 
+        || !HasMethod(func_object)
+        || !(cb := CallbackCreate(func_object)))
+    {
+        return false
+    }
+    If !DllCall("Comctl32.dll\SetWindowSubclass", "Ptr", HCTRL, "Ptr", CB, "Ptr", HCTRL, "Ptr", RefData)
+        Return (DllCall("Kernel32.dll\GlobalFree", "Ptr", CB, "Ptr") & 0)
+    Return (ControlCB[HCTRL] := CB)
 }
