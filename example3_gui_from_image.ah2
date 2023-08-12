@@ -19,7 +19,7 @@ img := d2ui.render.CreateBitmap(size := D2D1_SIZE_U([ccc.width, ccc.height]),
 d2ui.show()
 d2ui.render.BeginDraw()
 d2ui.render.Clear()
-d2ui.render.DrawBitmap(img)
+d2ui.render.DrawBitmap(img, D2D1_RECT_F([0, 0, 100, 100]))
 d2ui.render.EndDraw()
 d2ui.show()
 
