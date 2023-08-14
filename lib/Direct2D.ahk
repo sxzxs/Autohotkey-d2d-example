@@ -5,6 +5,8 @@
  * @version 0.0.2
  ***********************************************************************/
 
+#Requires AutoHotkey v2+
+
 ;; d2d1  https://docs.microsoft.com/zh-cn/windows/win32/api/d2d1/
 class ID2D1Factory extends ID2DBase {
 	static IID := '{06152247-6f50-465a-9245-118bfd3b6007}'

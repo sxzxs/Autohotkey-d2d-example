@@ -19,14 +19,20 @@ main()
     pGame.UpdateView()
 
     SubclassControl(ui.Hwnd, win_process)
-    SetTimer(timer_handle.bind(ui), 1000)
+    SetTimer(timer_handle.bind(ui), 16)
+    ;SetTimer(logic_handle, 10)
+}
+
+logic_handle()
+{
+    ;logger.info('')
 }
 
 timer_handle(ui)
 {
-    PostMessage(WM_TIMER := 0x113, ,,, ui.Hwnd)
+    PostMessage(WM_TIMER := 0x113,0x1,0x1,, ui.Hwnd)
     ;更新定时器时间
-    SetTimer , 1000
+    SetTimer , 16
     /*
     if(pGame.GameOver())
     {
@@ -63,6 +69,7 @@ class Game
     }
 	Timer()
     {	
+        logger.info('refresh')
     }
 	GameOver()
     {	
@@ -157,8 +164,13 @@ win_process(HWND, Msg, wParam, lParam, SubclassID, RefData)
             }
             ;pGame.UpdateView()
         }
+        case WM_COPYDATA := 0x4A:
+        {
+            logger.info(HWND, Msg, wParam, lParam, SubclassID, RefData)
+        }
         case WM_TIMER := 0x113:
         {
+            logger.info(HWND, Msg, wParam, lParam, SubclassID, RefData)
             if (!pGame.GameOver())
             {
                 pGame.Timer()
