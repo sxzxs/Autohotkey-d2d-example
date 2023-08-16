@@ -5,6 +5,7 @@
  * @version 0.0.2
  ***********************************************************************/
 
+#Include ./ctypes.ahk
 #Requires AutoHotkey v2+
 
 ;; d2d1  https://docs.microsoft.com/zh-cn/windows/win32/api/d2d1/
@@ -1856,7 +1857,6 @@ class ID2DBase {
 	}
 }
 
-#Include <ctypes>
 class D2D1_COLOR_F extends ctypes.struct {
 	static fields := [['float', 'r'], ['float', 'g'], ['float', 'b'], ['float', 'a']]
 }

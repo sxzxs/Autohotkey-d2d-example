@@ -4,6 +4,7 @@
  * @date 2022/04/19
  * @version 1.2.6
  ***********************************************************************/
+#Requires AutoHotkey v2+
 
 class wincapture {
 	static ptr := 0, refcount := 0
