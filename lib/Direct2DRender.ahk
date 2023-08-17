@@ -594,12 +594,13 @@ class Direct2DRender
 		if (points.length < 3)
 			return 0
 		pGeom := sink := 0
-		pGeom := this.p_factory.CreatePathGeometry()
+		pGeom := this.factory.CreatePathGeometry()
 		sink := pGeom.Open()
 		this.SetBrushColor(color)
+
 		sink.BeginFigure(D2D1_POINT_2F([points[1][1]+xOffset, points[1][2]+yOffset]), 1)
 		loop points.length - 1
-			sink.AddLine(D2D1_POINT_2F([points[a_index+1][1]+xOffset]), D2D1_POINT_2F([points[a_index+1][2]+yOffset]))
+			sink.AddLine(points[a_index+1][1]+xOffset, points[a_index+1][2]+yOffset)
 		sink.EndFigure(D2D1_FIGURE_END_CLOSED := 1)
 		sink.Close()
 		this.renderTarget.DrawGeometry(pGeom, this.brush, thickness, (rounded?this.strokeRounded:this.stroke))
@@ -623,12 +624,13 @@ class Direct2DRender
 		if (points.length < 3)
 			return 0
 		pGeom := sink := 0
-		pGeom := this.p_factory.CreatePathGeometry()
+		pGeom := this.factory.CreatePathGeometry()
 		sink := pGeom.Open()
 		this.SetBrushColor(color)
+		sink.SetFillMode(D2D1_FILL_MODE_WINDING := 1)
 		sink.BeginFigure(D2D1_POINT_2F([points[1][1]+xOffset, points[1][2]+yOffset]), 0)
 		loop points.length - 1
-			sink.AddLine(D2D1_POINT_2F([points[a_index+1][1]+xOffset]), D2D1_POINT_2F([points[a_index+1][2]+yOffset]))
+			sink.AddLine(points[a_index+1][1]+xOffset, points[a_index+1][2]+yOffset)
 		sink.EndFigure(D2D1_FIGURE_END_CLOSED := 1)
 		sink.Close()
 		this.renderTarget.FillGeometry(pGeom, this.brush, 0)

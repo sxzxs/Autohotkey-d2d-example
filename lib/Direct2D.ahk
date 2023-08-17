@@ -1103,8 +1103,13 @@ class ID2D1GeometrySink extends ID2D1SimplifiedGeometrySink {
 	static IID := '{2cd9069f-12e2-11dc-9fed-001143a055f9}'
 	; Creates a line segment between the current point and the specified end point and adds it to the geometry sink.
 	; Example creates an ID2D1PathGeometry, retrieves a sink, and uses it to define an hourglass shape. http://msdn.microsoft.com/en-us/library/windows/desktop/dd316604%28v=vs.85%29.aspx
-	AddLine(point0, point1) {	; D2D1_POINT_2F
-		ComCall(10, this, 'float', point0, 'float', point1, 'int')
+	AddLine(x, y) {	; D2D1_POINT_2F
+		;ComCall(10, this, 'float', point0, 'float', point1, 'int')
+
+		bf := Buffer(64)
+		NumPut("float", x, bf, 0)
+		NumPut("float", y, bf, 4)
+		ComCall(10, this, 'int64', NumGet(bf, 'int64'))
 	}
 
 	; Creates a cubic Bezier curve between the current point and the specified endpoint.
